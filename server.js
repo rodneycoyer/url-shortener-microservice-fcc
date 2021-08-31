@@ -4,6 +4,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser')
 const mongoose = require('mongoose');
 const URLshort = require('./models/url');
+const { deleteOne } = require('./models/url');
 
 const app = express();
 
@@ -32,25 +33,33 @@ app.get('/api/hello', function(req, res) {
   res.json({ greeting: 'hello API' });
 });
 
-
-
 // url shortener API endpoint
-app.post('/api/shorturl/new', function (req, res) {
-  // user url entry
-  const userUrlInput = req.body.url;
-  // create but do not execute query search
-  const findUrl = URLshort.find({original_url: userUrlInput});
-
-
-  res.json({
-    original_url: userUrlInput,
-    short_url: ''
-  });
-  console.log(req.body)
+app.post('/api/:shorturl/', function (req, res) {
+  // user req url
+  const url_input = req.body.url;
+  // url lookup
+    URLshort.findById(url_input, function (err, storedUrl) {
+      if ( url_input == 'invalid url') {
+        res.json({error: 'invalid url'});
+      } else {
+        if (err) {
+          return console.log(err);
+        } else if (url_input !== storedUrl) {
+          URLshort.save((err, url_input) => {
+            // create instance of url doc to save
+            const saveReqUrl = new URLshort({original_url: url_input});
+            if (err) return console.log(err);
+            done(null, saveReqUrl);
+          })
+        }
+      }
+      res.json({
+        original_url: url_input,
+        short_url: __dirname + "api/shorturl" + saveReqUrl._id
+      });
+    }
+  );
 });
-
-
-
 
 
 
